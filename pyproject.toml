@@ -1,0 +1,30 @@
+[project]
+name = "kb"
+version = "0.1.0"
+description = "AI Knowledge Feeds: self-updating knowledge base + MCP server (YouTube creators, Anthropic docs, GitHub changelogs)"
+requires-python = ">=3.11"
+dependencies = [
+    "yt-dlp>=2024.1.0",
+    "youtube-transcript-api>=0.6.2",
+    "feedparser>=6.0.11",
+    "pyyaml>=6.0.1",
+    "httpx>=0.27.0",
+    "mcp>=1.0.0",
+    # SOCKS5 support for `requests` (used by youtube-transcript-api's proxy
+    # config) -- needed for the proxy workaround, see kb/sources/youtube.py
+    "pysocks>=1.7.1",
+]
+
+[project.scripts]
+kb = "kb.cli:main"
+kb-mcp = "kb.mcp_server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["kb"]
+
+[dependency-groups]
+dev = ["pytest>=8"]

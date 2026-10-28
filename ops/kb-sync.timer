@@ -1,0 +1,11 @@
+[Unit]
+Description=Run AI Knowledge Feeds sync once a day at 08:00 (after the 00:00-08:00 night video render)
+
+[Timer]
+OnCalendar=*-*-* 08:00:00
+# No catch-up on boot: a reboot at night must not start a sync during the render.
+# Missing one day loses nothing (the RSS feed keeps the last ~15 uploads).
+Persistent=false
+
+[Install]
+WantedBy=timers.target

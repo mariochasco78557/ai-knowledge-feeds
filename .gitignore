@@ -1,0 +1,12 @@
+data/
+index/
+state/
+.env
+*.log
+__pycache__/
+.venv/
+logs/
+sources.yaml
+*.pyc
+.pytest_cache/
+.claude/

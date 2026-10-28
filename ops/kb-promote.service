@@ -1,0 +1,22 @@
+[Unit]
+Description=AI Knowledge Feeds weekly promotion of candidates to a vault branch (never main)
+After=network-online.target kb-sync.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=@KB_DIR@
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+# Never run while the daily sync is active: wait (5 min steps).
+ExecStartPre=/bin/sh -c 'while systemctl --user show -p ActiveState --value kb-sync.service | grep -qE "^(active|activating|reloading)$"; do sleep 300; done'
+ExecStart=@KB_DIR@/ops/kb-promote.sh
+Nice=19
+CPUSchedulingPolicy=idle
+IOSchedulingClass=idle
+CPUQuota=50%
+MemoryHigh=900M
+MemoryMax=1400M
+MemorySwapMax=200M
+TasksMax=100
+OOMScoreAdjust=500
+TimeoutStartSec=3h

@@ -1,0 +1,10 @@
+[Unit]
+Description=AI Knowledge Feeds trickle, Sat-Sun 08:00-24:00: 2 videos per hour
+
+[Timer]
+# 00:00-08:00 stays free for the night video render, weekends included.
+OnCalendar=Sat,Sun *-*-* 08..23:15:00
+Unit=kb-trickle@2.service
+
+[Install]
+WantedBy=timers.target

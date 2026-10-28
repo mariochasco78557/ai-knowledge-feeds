@@ -1,0 +1,24 @@
+[Unit]
+Description=AI Knowledge Feeds trickle: up to %i queued YouTube videos per run (throttled, low priority)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=@KB_DIR@
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+# %i = videos per run; started by kb-trickle-weekday.timer (@6) and
+# kb-trickle-weekend.timer (@2). Exits immediately when nothing is pending.
+Environment=KB_THROTTLE_MAX_VIDEOS_PER_RUN=%i
+ExecStart=%h/.local/bin/uv run --quiet kb sync --pending-only
+Nice=19
+CPUSchedulingPolicy=idle
+IOSchedulingClass=idle
+CPUQuota=50%
+MemoryHigh=900M
+MemoryMax=1400M
+MemorySwapMax=200M
+TasksMax=100
+OOMScoreAdjust=500
+# A run killed mid-video loses nothing: state is saved per video.
+TimeoutStartSec=30min

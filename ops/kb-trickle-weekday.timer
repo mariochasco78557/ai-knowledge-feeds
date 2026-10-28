@@ -1,0 +1,10 @@
+[Unit]
+Description=AI Knowledge Feeds trickle, Mon-Fri 08:00-14:00 (daytime): 6 videos every 20 min
+
+[Timer]
+# Last start 13:45 + 30 min timeout -> done by ~14:15 at worst.
+OnCalendar=Mon..Fri *-*-* 08..13:05/20:00
+Unit=kb-trickle@6.service
+
+[Install]
+WantedBy=timers.target

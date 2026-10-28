@@ -1,0 +1,24 @@
+[Unit]
+Description=AI Knowledge Feeds daily sync (YouTube, Anthropic docs, GitHub changelogs) — low priority, capped
+After=network-online.target
+Wants=network-online.target
+OnFailure=kb-sync-failure.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=@KB_DIR@
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=%h/.local/bin/uv run --quiet kb sync
+# Slow is fine, crashing the host is not.
+# Runs in its own cgroup, never as a child of interactive sessions.
+Nice=19
+CPUSchedulingPolicy=idle
+IOSchedulingClass=idle
+CPUQuota=50%
+MemoryHigh=900M
+MemoryMax=1400M
+MemorySwapMax=200M
+TasksMax=100
+# If memory runs out anyway, the kernel kills this job before interactive sessions.
+OOMScoreAdjust=500
+TimeoutStartSec=8h

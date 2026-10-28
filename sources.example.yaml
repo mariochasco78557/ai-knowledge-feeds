@@ -1,0 +1,108 @@
+# AI Knowledge Feeds: source registry (example)
+#
+# Copy to sources.yaml and edit. Adding a new source = adding one entry here
+# (plus, for a new *type* of source, a fetcher module under kb/sources/).
+#
+# Fields common to every entry:
+#   type       one of: youtube | docs | github_releases | github_repos | local_md
+#   authority  "canonical" (official docs/changelogs) or "practice" (creators)
+#
+# YouTube may block datacenter IPs: set the KB_PROXY environment variable
+# (e.g. socks5://127.0.0.1:1080) or a `proxy:` key on a youtube source.
+
+# Resource throttling (see kb/throttle.py): slow and steady beats fast on a
+# shared machine. Hard CPU/RAM caps are in the systemd units under ops/.
+throttle:
+  max_videos_per_run: 3
+  sleep_between_videos: 60
+  ytdlp_sleep_seconds: 5
+  docs_workers: 1
+  docs_sleep_seconds: 0.5
+  stop_after_consecutive_failures: 2
+  weekly_rebuild: false
+
+sources:
+
+  # ---------------------------------------------------------------------
+  # YouTube creators (practice). Copy this block, uncomment, fill in.
+  # `kb backfill --source <id> --since YYYY-MM-DD` pulls history.
+  # ---------------------------------------------------------------------
+  # - id: example-creator
+  #   type: youtube
+  #   channel: https://www.youtube.com/@handle
+  #
+  # Fields the current code reads (use `key`, not `id`, in a real entry):
+  # - key: example-creator
+  #   type: youtube
+  #   authority: practice
+  #   channel_url: https://www.youtube.com/@handle
+  #   channel_id: UCxxxxxxxxxxxxxxxxxxxxxx   # from the channel page / RSS feed URL
+  #   since: "2026-01-01"
+  #   include_keywords: [claude code, codex, mcp, agent sdk]   # else an LLM relevance check decides
+
+  # ---------------------------------------------------------------------
+  # Anthropic official docs (canonical)
+  # ---------------------------------------------------------------------
+  - key: anthropic-claude-code-docs
+    type: docs
+    authority: canonical
+    # Verified 2026-09-13: HTTP 200, no redirect. 203 pages listed, single
+    # language (no /docs/<lang>/ split), so no include_patterns needed.
+    llms_txt_url: https://code.claude.com/docs/llms.txt
+    # /docs/_llms/<lang>.md are whole-site localized index files (fr, de,
+    # it, jp, es, ko, cn, zh-hant, ru, id, pt-br, ...), not English content
+    # pages — exclude them (found 2026-09-13).
+    exclude_patterns:
+      - "/_llms/"
+
+  - key: anthropic-platform-docs
+    type: docs
+    authority: canonical
+    # Verified 2026-09-13: https://docs.anthropic.com/llms.txt and
+    # https://docs.claude.com/llms.txt both HTTP 200 and both redirect to
+    # https://platform.claude.com/llms.txt (that is the URL actually
+    # fetched; kept here so a future redirect break is easy to spot).
+    llms_txt_url: https://docs.claude.com/llms.txt
+    # The file lists 628 English pages under /docs/en/ inline ("Content
+    # included below") plus 11 other languages that are NOT enumerated as
+    # per-page links (just "Visit website for content" pointers to
+    # /docs/<lang>) — so there is no per-language link duplication to
+    # filter out in the link list itself. The bulk of the 628 pages
+    # (387 under /docs/en/api/, of which 283 are /api/beta/* admin/org
+    # endpoint reference pages) are granular Admin/Organization API
+    # reference, not SDK-per-language duplicates as first assumed; kept
+    # in scope since they are still canonical, but flagged here in case
+    # someone wants to trim them later. include_patterns below is a
+    # belt-and-suspenders English-only filter.
+    include_patterns:
+      - "^https://platform\\.claude\\.com/docs/en/"
+
+  # ---------------------------------------------------------------------
+  # GitHub — changelogs / releases (canonical)
+  # ---------------------------------------------------------------------
+  - key: claude-code
+    type: github_releases
+    authority: canonical
+    repo: anthropics/claude-code
+    changelog_path: CHANGELOG.md
+
+  - key: codex
+    type: github_releases
+    authority: canonical
+    repo: openai/codex
+    # Skip pre-release tags (e.g. rust-v0.20.0-alpha.3) so only stable
+    # releases get indexed.
+    tag_exclude: "-alpha|-beta|-rc"
+
+
+  # ---------------------------------------------------------------------
+  # Local markdown (never touches the network): `kb import-local <key>`
+  # ---------------------------------------------------------------------
+  - key: my-notes
+    type: local_md
+    authority: practice
+    private: true          # private sources are indexed but get no topic pages
+    importer: generic_md   # one doc per .md file under import_dir
+    id_prefix: mn
+    import_dir: ./local-notes
+    tags: [notes]
